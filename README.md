@@ -1,4 +1,4 @@
-# Laboratorioen R
+# Laboratorio en R
 
 ## El preprocesamiento y limpieza de los datos.
 
