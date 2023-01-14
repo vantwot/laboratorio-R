@@ -66,8 +66,8 @@ windows()
 plot(Rules)
 
 # Verificación de las reglas sobres los datos
-editrules::violatedEdits(Rules, Datos)
-Valid_Data = editrules::violatedEdits(Rules, Datos)
+editrules::violatedEdits(Rules, xlm_object_trans)
+Valid_Data = editrules::violatedEdits(Rules, xlm_object_trans)
 summary(Valid_Data)
 
 #Identificar que observaciones presentan violaciones a las reglas

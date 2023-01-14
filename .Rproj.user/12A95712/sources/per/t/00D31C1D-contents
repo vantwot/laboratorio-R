@@ -1,6 +1,6 @@
 #Regla de los porcentajes de la mortalidad 
 # numerical rules
-if ( Esperanza.vida.mujer <= Esperanza.vida.hombre ) Esperanza.vida.mujer == Esperanza.vida.hombre * 12%
+Esperanza.vida.mujer > Esperanza.vida.hombre
 
 
 #Regla de la esperenza de la mujer debe ser mayor a la del hombre
