@@ -70,13 +70,19 @@ editrules::violatedEdits(Rules, xlm_object_trans)
 Valid_Data = editrules::violatedEdits(Rules, xlm_object_trans)
 summary(Valid_Data)
 
-#Identificar que observaciones presentan violaciones a las reglas
-#which(Valid_Data)
-#matrix(data=1:55, 5, 11)
-
 # Visualización del diagnóstico
 windows()
 plot(Valid_Data)
+
+#Eliminación del error 1 para más adelante corregirlos
+xlm_object_trans$validaciones1 <- Valid_Data[, 1]
+xlm_object_trans$Esperanza.vida.mujer = ifelse(xlm_object_trans$validaciones1 == FALSE,
+                                               xlm_object_trans$Esperanza.vida.mujer, NA)
+
+#Eliminación del error 2 para más adelante corregirlos
+xlm_object_trans$validaciones2 <- Valid_Data[, 2]
+xlm_object_trans$Mortalidad.infantil = ifelse(xlm_object_trans$validaciones2 == FALSE,
+                                              xlm_object_trans$Tasa.mortalidad, NA)
 
 
 #**********  Mostrar datos faltantes  **********#
@@ -147,3 +153,5 @@ graph_na_fields = function(d, plot=T) {
 }
 
 result_graph = graph_na_fields(xlm_object_trans)
+
+
