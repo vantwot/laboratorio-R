@@ -2,7 +2,7 @@
 #-- Universidad del Valle: Escuela de Estadistica    --#
 #-- Asignatura: Probabilidad y Estadistica           --#
 #-- Integrantes : Santiago Ramirez -                 --#
-#--               Deiby Rodriguez -                  --#
+#--               Deiby Rodriguez - 1842917          --#
 #--               Valentina Salamanca - 1842427      --#
 #-- Laboratorio                                      --#
 #------------------------------------------------------#
@@ -11,7 +11,7 @@
 #   0. Configuración inicial-Librerias requeridas      #
 #------------------------------------------------------#
 
-install.packages("easypackages")        # Libreria especial para hacer carga automática de librerias
+#install.packages("easypackages")        # Libreria especial para hacer carga automática de librerias
 library("easypackages")
 
 lib_req<-c("lubridate","dplyr","visdat","missMDA","mice","DMwR2","editrules", "corrplot")# Listado de librerias requeridas por el script
@@ -153,5 +153,6 @@ graph_na_fields = function(d, plot=T) {
 }
 
 result_graph = graph_na_fields(xlm_object_trans)
+
 
 
