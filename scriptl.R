@@ -2,16 +2,18 @@
 #-- Universidad del Valle: Escuela de Estadistica    --#
 #-- Asignatura: Probabilidad y Estadistica           --#
 #-- Integrantes : Santiago Ramirez -                 --#
-#--               Deiby Rodriguez -                  --#
+#--               Deiby Rodriguez - 1842917          --#
 #--               Valentina Salamanca - 1842427      --#
 #-- Laboratorio                                      --#
 #------------------------------------------------------#
+
+#  PREPOCESAMIENTO Y LIMPIEZA DE DATOS 
 
 #------------------------------------------------------#
 #   0. Configuración inicial-Librerias requeridas      #
 #------------------------------------------------------#
 
-install.packages("easypackages")        # Libreria especial para hacer carga automática de librerias
+#install.packages("easypackages")        # Libreria especial para hacer carga automática de librerias
 library("easypackages")
 
 lib_req<-c("lubridate","dplyr","visdat","missMDA","mice","DMwR2","editrules", "corrplot")# Listado de librerias requeridas por el script
@@ -84,14 +86,13 @@ xlm_object_trans$validaciones2 <- Valid_Data[, 2]
 xlm_object_trans$Mortalidad.infantil = ifelse(xlm_object_trans$validaciones2 == FALSE,
                                               xlm_object_trans$Tasa.mortalidad, NA)
 
-
-#**********  Mostrar datos faltantes  **********#
+#----------------------------------------------------------------------#
+#### 3. Mostrar datos faltantes                                     ####
+#----------------------------------------------------------------------#
 
 is.na(xlm_object_trans)  #Lista que me muestra los valores faltantes
 x11()
 visdat::vis_dat(xlm_object_trans)
-
-names(xlm_object_trans) = xlm_object_trans$País
 
 graph_na_fields = function(d, plot=T) {
   rows = nrow(d)
@@ -153,5 +154,43 @@ graph_na_fields = function(d, plot=T) {
 }
 
 result_graph = graph_na_fields(xlm_object_trans)
+
+#----------------------------------------------------------------------#
+#### 5. Corregir datos faltantes                                    ####
+#----------------------------------------------------------------------#
+
+# VISUALIZACIÓN DE DATOS 
+
+#----------------------------------------------------------------------#
+#### 1. Distribución de países según grupo                          ####
+#----------------------------------------------------------------------#
+
+vector_1 <- sum(xlm_object_trans$GRUPOS == "AFRICA")
+vector_2 <- sum(xlm_object_trans$GRUPOS == "ASIA")
+vector_3 <- sum(xlm_object_trans$GRUPOS == "EO-NA_JAPON_AUSTR_NZ")
+vector_4 <- sum(xlm_object_trans$GRUPOS == "EUROPA ORIENTAL")
+vector_5 <- sum(xlm_object_trans$GRUPOS == "IBEROAMERICA")
+vector_6 <- sum(xlm_object_trans$GRUPOS == "ORIENTE MEDIO")
+matriz <- rbind(vector_1, vector_2, vector_3, vector_4, vector_5, vector_6)
+
+etiquetas <- paste0(round(100 * matriz/sum(matriz), 2), "%")
+
+# Plot the chart.
+pie(matriz, labels = etiquetas, main = "Distribución de países según grupos",col = c("#D43F3A", "#EEA236", "#46B8DA","#5CB85C","#357EBD","#B8B8B8"))
+legend("topright", c("AFRICA", "ASIA", "EONA_JAPON_AUSTR_NZ", "EUROPA ORIENTAL", "IBEROAMERICA", "ORIENTE MEDIO"), cex = 0.6,
+       fill = c("#D43F3A", "#EEA236", "#46B8DA","#5CB85C","#357EBD","#B8B8B8"))
+
+#----------------------------------------------------------------------#
+#### 2. Indicadores de tasas de mortalidad y natalidad              ####
+#----------------------------------------------------------------------#
+
+#----------------------------------------------------------------------#
+#### 3. PNB POR GRUPOS                                              ####
+#----------------------------------------------------------------------#
+
+#----------------------------------------------------------------------#
+#### 4. CUARTILES POR PNB                                           ####
+#----------------------------------------------------------------------#
+
 
 
