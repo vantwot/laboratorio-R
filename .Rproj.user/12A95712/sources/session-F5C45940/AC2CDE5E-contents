@@ -18,8 +18,7 @@ library("easypackages")
 lib_req<-c("lubridate","dplyr","visdat","missMDA","mice","DMwR2","editrules", "corrplot")
 
 #Llamando librerias necesarias
-lapply(c("readxl", "stringr", "dplyr", "visdat", "editrules", "ggplot2",
-         "dplyr", "ggrepel", "data.table"), require, character.only = TRUE)
+lapply(c("readxl", "stringr", "dplyr", "visdat", "editrules", "ggplot2", "ggrepel", "data.table"), require, character.only = TRUE)
 
 #Leer archivo xls
 xlm_object <- read_xls("paises.xls")
@@ -187,7 +186,6 @@ x <- xlm_object_trans[,c("Tasa.natalidad","Tasa.mortalidad","Mortalidad.infantil
 long <- melt(setDT(x), id.vars = c("GRUPOS"), variable.name = "Indicadores")
 long <- long %>% group_by(Indicadores, GRUPOS) %>% summarise(valor2 = mean(value, rm.na = TRUE))
 
-long
 ggplot(long, aes(fill=Indicadores, y=valor2, x=GRUPOS)) + 
   geom_bar(position="dodge", stat="identity") +
   ylab("porcentaje") + geom_text(

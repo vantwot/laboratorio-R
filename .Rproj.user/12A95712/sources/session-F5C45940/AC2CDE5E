@@ -3,7 +3,7 @@
     "path": "~/Desktop/laboratorio-R/scriptl.R",
     "project_path": "scriptl.R",
     "type": "r_source",
-    "hash": "0",
+    "hash": "3562166663",
     "contents": "",
     "dirty": true,
     "created": 1673964445474.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "67,0",
-        "scrollLine": "50"
+        "cursorPosition": "187,0",
+        "scrollLine": "179"
     },
     "folds": "",
     "lastKnownWriteTime": 1673971829,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1674075909161,
+    "last_content_update": 1674076602152,
     "read_only": false,
     "read_only_alternatives": []
 }
