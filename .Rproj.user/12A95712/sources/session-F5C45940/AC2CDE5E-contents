@@ -196,6 +196,17 @@ ggplot(long, aes(fill=Indicadores, y=valor2, x=GRUPOS)) +
 #----------------------------------------------------------------------#
 #### 3. PNB POR GRUPOS                                              ####
 #----------------------------------------------------------------------#
+x <- xlm_object_trans[,c("PNB","GRUPOS")]
+x
+long <- melt(setDT(x), id.vars = c("GRUPOS"), variable.name = "Indicadores")
+long <- long %>% group_by(Indicadores, GRUPOS) %>% summarise(valor2 = mean(value, rm.na = TRUE))
+
+ggplot(long, aes(fill=Indicadores, y=valor2, x=GRUPOS)) + 
+  geom_bar(position="dodge", stat="identity") +
+  ylab("porcentaje") + geom_text(
+    aes(x = GRUPOS, y = valor2, label = paste(round(valor2,1), "%"), group = Indicadores),
+    position = position_dodge(width = 1),
+    vjust = -0.5, size = 4 ) + ggtitle("Indicadores de tasas de mortalidad y natalidad")
 
 #----------------------------------------------------------------------#
 #### 4. CUARTILES POR PNB                                           ####

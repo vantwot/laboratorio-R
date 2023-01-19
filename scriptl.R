@@ -13,16 +13,12 @@
 #   0. Configuración inicial-Librerias requeridas      #
 #------------------------------------------------------#
 
-#install.packages("easypackages")        # Libreria especial para hacer carga automática de librerias
 library("easypackages")
-
-lib_req<-c("lubridate","dplyr","visdat","missMDA","mice","DMwR2","editrules", "corrplot")# Listado de librerias requeridas por el script
-easypackages::packages(lib_req) 
-#Instalar paquete en caso de su ausencia
-#install.packages(c("readxl", "stringr","visdat"))
+#Librerias necesarias para el script
+lib_req<-c("lubridate","dplyr","visdat","missMDA","mice","DMwR2","editrules", "corrplot")
 
 #Llamando librerias necesarias
-lapply(c("readxl", "stringr", "dplyr", "visdat", "editrules"), require, character.only = TRUE)
+lapply(c("readxl", "stringr", "dplyr", "visdat", "editrules", "ggplot2", "ggrepel", "data.table"), require, character.only = TRUE)
 
 #Leer archivo xls
 xlm_object <- read_xls("paises.xls")
@@ -31,10 +27,10 @@ xlm_object <- read_xls("paises.xls")
 ####                1. Inspección de datos                          ####
 #----------------------------------------------------------------------#
 
-#Como primera observación los fileds de "GRUPOS" se encuentran en mayusculas y minusculas
-table(xlm_object$GRUPOS)
+#Como primera observación los fileds de "GRUPOS" se encuentran en 
+#mayusculas y minusculas, se procede a hacer correciones
 
-#Haciendo correciones
+table(xlm_object$GRUPOS)
 
 asia = c(ASIA = "ASIA", Asia = "ASIA", asia = "ASIA")
 africa = c(AFRICA = "AFRICA", Africa = "AFRICA", africa = "AFRICA")
@@ -43,22 +39,15 @@ iberoamerica = c("Iberoamerica" = "IBEROAMERICA", "iberoamerica" = "IBEROAMERICA
 
 key_field_groups = c(asia, africa, eu_oriental, iberoamerica)
 
-
-#str_extract(new_ej, regex('\\basia\\b', ignore_case = TRUE))
 xlm_object_trans = transform(xlm_object, 
                              GRUPOS = factor(dplyr::recode(GRUPOS, !!!key_field_groups)))
 
 rm(asia, africa, eu_oriental, iberoamerica, key_field_groups)
 str(xlm_object_trans)
 
-
-#Cambio de nombre en la columna PNB  **********#
-colnames(xlm_object_trans)[which(names(xlm_object_trans) == "PNB")] = "PIB"
-
 #----------------------------------------------------------------------#
 #### 2. Validación de reglas de consistencia en los datos           ####
 #----------------------------------------------------------------------#
-
 
 # Carga del archivo de reglas de validación
 Rules <- editrules::editfile("consistencia.txt")
@@ -76,15 +65,22 @@ summary(Valid_Data)
 windows()
 plot(Valid_Data)
 
-#Eliminación del error 1 para más adelante corregirlos
+#Corregir error1
 xlm_object_trans$validaciones1 <- Valid_Data[, 1]
 xlm_object_trans$Esperanza.vida.mujer = ifelse(xlm_object_trans$validaciones1 == FALSE,
-                                               xlm_object_trans$Esperanza.vida.mujer, NA)
+                                               xlm_object_trans$Esperanza.vida.mujer, 
+                                               round(xlm_object_trans$Esperanza.vida.hombre * 1.12,1))
 
 #Eliminación del error 2 para más adelante corregirlos
 xlm_object_trans$validaciones2 <- Valid_Data[, 2]
 xlm_object_trans$Mortalidad.infantil = ifelse(xlm_object_trans$validaciones2 == FALSE,
                                               xlm_object_trans$Tasa.mortalidad, NA)
+
+#Corregir error 3
+xlm_object_trans$validaciones3 <- Valid_Data[, 3]
+xlm_object_trans$Esperanza.vida.mujer = ifelse(xlm_object_trans$validaciones3 == FALSE,
+                                               xlm_object_trans$Esperanza.vida.mujer, 
+                                               round(xlm_object_trans$Esperanza.vida.hombre * 1.12,1))
 
 #----------------------------------------------------------------------#
 #### 3. Mostrar datos faltantes                                     ####
@@ -159,34 +155,58 @@ result_graph = graph_na_fields(xlm_object_trans)
 #### 5. Corregir datos faltantes                                    ####
 #----------------------------------------------------------------------#
 
+install.packages("mice")
+library(mice)
+
+#Imputación por promedio
+imputM = mice::mice(xlm_object_trans, maxit = 1, method = "mean", seed = 2018, print = F)
+xlm_object_trans_imputM = mice::complete(imputM)
+
+#Imputación por regresión
+imputR = mice::mice(xlm_object_trans, maxit = 1, method = "norm.predict", seed = 2018, print = F)
+xlm_object_trans_imputR = mice::complete(imputR)
 # VISUALIZACIÓN DE DATOS 
 
 #----------------------------------------------------------------------#
 #### 1. Distribución de países según grupo                          ####
 #----------------------------------------------------------------------#
 
-vector_1 <- sum(xlm_object_trans$GRUPOS == "AFRICA")
-vector_2 <- sum(xlm_object_trans$GRUPOS == "ASIA")
-vector_3 <- sum(xlm_object_trans$GRUPOS == "EO-NA_JAPON_AUSTR_NZ")
-vector_4 <- sum(xlm_object_trans$GRUPOS == "EUROPA ORIENTAL")
-vector_5 <- sum(xlm_object_trans$GRUPOS == "IBEROAMERICA")
-vector_6 <- sum(xlm_object_trans$GRUPOS == "ORIENTE MEDIO")
-matriz <- rbind(vector_1, vector_2, vector_3, vector_4, vector_5, vector_6)
+grupos <- xlm_object_trans %>% group_by(GRUPOS) %>% count()
+grupos$eti <- round(100 * grupos$n/sum(grupos$n), 2)
 
-etiquetas <- paste0(round(100 * matriz/sum(matriz), 2), "%")
-
-# Plot the chart.
-pie(matriz, labels = etiquetas, main = "Distribución de países según grupos",col = c("#D43F3A", "#EEA236", "#46B8DA","#5CB85C","#357EBD","#B8B8B8"))
-legend("topright", c("AFRICA", "ASIA", "EONA_JAPON_AUSTR_NZ", "EUROPA ORIENTAL", "IBEROAMERICA", "ORIENTE MEDIO"), cex = 0.6,
-       fill = c("#D43F3A", "#EEA236", "#46B8DA","#5CB85C","#357EBD","#B8B8B8"))
+ggplot(grupos, aes(x = GRUPOS, y = eti, fill = GRUPOS)) +
+  geom_bar(width = 1, stat = "identity", color="white", alpha=0.8) + 
+  ylab("porcentaje") + geom_text(aes(label = paste(eti,"%"), vjust=-0.6))+
+  theme(legend.position = "none") + ggtitle("Distribución por grupos")
 
 #----------------------------------------------------------------------#
 #### 2. Indicadores de tasas de mortalidad y natalidad              ####
 #----------------------------------------------------------------------#
+x <- xlm_object_trans[,c("Tasa.natalidad","Tasa.mortalidad","Mortalidad.infantil","GRUPOS")]
+long <- melt(setDT(x), id.vars = c("GRUPOS"), variable.name = "Indicadores")
+long <- long %>% group_by(Indicadores, GRUPOS) %>% summarise(valor2 = mean(value, rm.na = TRUE))
 
+ggplot(long, aes(fill=Indicadores, y=valor2, x=GRUPOS)) + 
+  geom_bar(position="dodge", stat="identity") +
+  ylab("porcentaje") + geom_text(
+    aes(x = GRUPOS, y = valor2, label = paste(round(valor2,1), "%"), group = Indicadores),
+    position = position_dodge(width = 1),
+    vjust = -0.5, size = 4 ) + ggtitle("Indicadores de tasas de mortalidad y natalidad")
+  
 #----------------------------------------------------------------------#
 #### 3. PNB POR GRUPOS                                              ####
 #----------------------------------------------------------------------#
+x <- xlm_object_trans[,c("PNB","GRUPOS")]
+x
+long <- melt(setDT(x), id.vars = c("GRUPOS"), variable.name = "Indicadores")
+long <- long %>% group_by(Indicadores, GRUPOS) %>% summarise(valor2 = mean(value, rm.na = TRUE))
+
+ggplot(long, aes(fill=Indicadores, y=valor2, x=GRUPOS)) + 
+  geom_bar(position="dodge", stat="identity") +
+  ylab("porcentaje") + geom_text(
+    aes(x = GRUPOS, y = valor2, label = paste(round(valor2,1), "%"), group = Indicadores),
+    position = position_dodge(width = 1),
+    vjust = -0.5, size = 4 ) + ggtitle("Indicadores de tasas de mortalidad y natalidad")
 
 #----------------------------------------------------------------------#
 #### 4. CUARTILES POR PNB                                           ####
