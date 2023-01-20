@@ -221,6 +221,7 @@ imputadosf$TIPO[imputadosf$y >= Q2 & imputadosf$y < Q3] <- "MEDIO_ALTO"
 imputadosf$TIPO[imputadosf$y > Q3] <- "ALTO"
 
 z <- imputadosf[,c("TIPO","GRUPOS", "y", "País")]
+#Variable que almacena el contador de los niveles de pobreza según el grupo
 a <- imputadosf %>% group_by(TIPO,GRUPOS) %>% count()
 
 ggplot(a, aes(fill=TIPO, y=n, x=GRUPOS)) + 
