@@ -7,7 +7,7 @@
 #-- Laboratorio                                      --#
 #------------------------------------------------------#
 
-#  PREPOCESAMIENTO Y LIMPIEZA DE DATOS 
+#1. PREPOCESAMIENTO Y LIMPIEZA DE DATOS 
 
 #------------------------------------------------------#
 #   0. Configuración inicial-Librerias requeridas      #
@@ -152,23 +152,24 @@ result_graph = graph_na_fields(xlm_object_trans)
 #### 5. Corregir datos faltantes                                    ####
 #----------------------------------------------------------------------#
 
-install.packages("mice")
 library(mice)
-
-#Imputación por promedio
-imputM = mice::mice(xlm_object_trans, maxit = 1, method = "mean", seed = 2018, print = F)
-xlm_object_trans_imputM = mice::complete(imputM)
 
 #Imputación por regresión
 imputR = mice::mice(xlm_object_trans, maxit = 1, method = "norm.predict", seed = 2018, print = F)
 xlm_object_trans_imputR = mice::complete(imputR)
-# VISUALIZACIÓN DE DATOS 
 
+
+# Guardar datos corregidos
+
+saveRDS(xlm_object_trans_imputR, file = "imputacionDatos.rds")
+imputadosf = readRDS(file = "imputacionDatos.rds")
+
+#2. VISUALIZACIÓN DE DATOS
 #----------------------------------------------------------------------#
 #### 1. Distribución de países según grupo                          ####
 #----------------------------------------------------------------------#
 
-grupos <- xlm_object_trans %>% group_by(GRUPOS) %>% count()
+grupos <- imputadosf %>% group_by(GRUPOS) %>% count()
 grupos$eti <- round(100 * grupos$n/sum(grupos$n), 2)
 
 ggplot(grupos, aes(x = GRUPOS, y = eti, fill = GRUPOS)) +
@@ -179,54 +180,48 @@ ggplot(grupos, aes(x = GRUPOS, y = eti, fill = GRUPOS)) +
 #----------------------------------------------------------------------#
 #### 2. Indicadores de tasas de mortalidad y natalidad              ####
 #----------------------------------------------------------------------#
-x <- xlm_object_trans[,c("Tasa.natalidad","Tasa.mortalidad","Mortalidad.infantil","GRUPOS")]
+x <- imputadosf[,c("Tasa.natalidad","Tasa.mortalidad","Mortalidad.infantil","GRUPOS")]
 long <- melt(setDT(x), id.vars = c("GRUPOS"), variable.name = "Indicadores")
-long <- long %>% group_by(Indicadores, GRUPOS) %>% summarise(valor2 = mean(value, rm.na = TRUE))
+long <- long %>% group_by(Indicadores, GRUPOS) %>% summarise(valor1 = mean(value))
 
-ggplot(long, aes(fill=Indicadores, y=valor2, x=GRUPOS)) + 
+ggplot(long, aes(fill=Indicadores, y=valor1, x=GRUPOS)) + 
   geom_bar(position="dodge", stat="identity") +
   ylab("porcentaje") + geom_text(
-    aes(x = GRUPOS, y = valor2, label = paste(round(valor2,1), "%"), group = Indicadores),
+    aes(x = GRUPOS, y = valor1, label = paste(round(valor1,1), "%"), group = Indicadores),
     position = position_dodge(width = 1),
     vjust = -0.5, size = 4 ) + ggtitle("Indicadores de tasas de mortalidad y natalidad")
   
 #----------------------------------------------------------------------#
 #### 3. PNB POR GRUPOS                                              ####
 #----------------------------------------------------------------------#
-xlm_object_trans$y <- xlm_object_trans$PNB/xlm_object_trans$Poblacion.miles
-long <- xlm_object_trans %>% group_by(GRUPOS) %>% summarise(valor2 = mean(y, na.rm=TRUE))
-long
+imputadosf$y <- imputadosf$PNB/imputadosf$Poblacion.miles
+long1 <- imputadosf %>% group_by(GRUPOS) %>% summarise(valor2 = mean(y))
+long1
 
-boxplot(long$valor2)
-
-p <- ggplot(xlm_object_trans, aes(y=y, fill=GRUPOS, x=GRUPOS)) + 
+ppc <- ggplot(imputadosf, aes(y=y, fill=GRUPOS, x=GRUPOS)) + 
   geom_boxplot() + ggtitle("PNB per cápita") + ylab("PNB per cápita")
 
-p
+ppc
 
 #----------------------------------------------------------------------#
 #### 4. CUARTILES POR PNB                                           ####
 #----------------------------------------------------------------------#
 
-long 
-
 #cuartiles
 
-Q1 <- quantile(xlm_object_trans$y, na.rm = TRUE, c(0.25), type = 6); Q1
+Q1 <- quantile(imputadosf$y, na.rm = TRUE, c(0.25), type = 6); Q1
 
-Q2 <- quantile(xlm_object_trans$y, na.rm = TRUE, c(0.50), type = 6); Q2
+Q2 <- quantile(imputadosf$y, na.rm = TRUE, c(0.50), type = 6); Q2
 
-Q3 <- quantile(xlm_object_trans$y, na.rm = TRUE, c(0.75), type = 6); Q3
+Q3 <- quantile(imputadosf$y, na.rm = TRUE, c(0.75), type = 6); Q3
 
-xlm_object_trans$TIPO <- "BAJO"
-xlm_object_trans$TIPO[xlm_object_trans$y >= Q1 & xlm_object_trans$y < Q2] <- "MEDIO_BAJO"
-xlm_object_trans$TIPO[xlm_object_trans$y >= Q2 & xlm_object_trans$y < Q3] <- "MEDIO_ALTO"
-xlm_object_trans$TIPO[xlm_object_trans$y > Q3] <- "ALTO"
+imputadosf$TIPO <- "BAJO"
+imputadosf$TIPO[imputadosf$y >= Q1 & imputadosf$y < Q2] <- "MEDIO_BAJO"
+imputadosf$TIPO[imputadosf$y >= Q2 & imputadosf$y < Q3] <- "MEDIO_ALTO"
+imputadosf$TIPO[imputadosf$y > Q3] <- "ALTO"
 
-x <- xlm_object_trans[,c("TIPO","GRUPOS", "y", "País")]
-a <- xlm_object_trans %>% group_by(TIPO,GRUPOS) %>% count()
-
-a
+z <- imputadosf[,c("TIPO","GRUPOS", "y", "País")]
+a <- imputadosf %>% group_by(TIPO,GRUPOS) %>% count()
 
 ggplot(a, aes(fill=TIPO, y=n, x=GRUPOS)) + 
   geom_bar(position="dodge", stat="identity") +
