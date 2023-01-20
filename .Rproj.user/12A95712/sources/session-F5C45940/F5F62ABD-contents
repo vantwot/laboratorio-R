@@ -1,8 +1,0 @@
-#Regla de la esperanza de la mujer debe ser mayor a la del hombre (Error 1)
-Esperanza.vida.mujer > Esperanza.vida.hombre 
-
-#Regla de los porcentajes de la mortalidad (Error 2)
-Mortalidad.infantil <= 100
-
-#Reglar de la esperanza de la mujer deber ser mayor a 0
-Esperanza.vida.mujer != NA

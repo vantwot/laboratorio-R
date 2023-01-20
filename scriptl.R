@@ -1,7 +1,7 @@
 #------------------------------------------------------#
 #-- Universidad del Valle: Escuela de Estadistica    --#
 #-- Asignatura: Probabilidad y Estadistica           --#
-#-- Integrantes : Santiago Ramirez -                 --#
+#-- Integrantes : Santiago Ramirez - 1841391         --#
 #--               Deiby Rodriguez - 1842917          --#
 #--               Valentina Salamanca - 1842427      --#
 #-- Laboratorio                                      --#
@@ -65,22 +65,19 @@ summary(Valid_Data)
 windows()
 plot(Valid_Data)
 
-#Corregir error1
+#Correción error 1
 xlm_object_trans$validaciones1 <- Valid_Data[, 1]
 xlm_object_trans$Esperanza.vida.mujer = ifelse(xlm_object_trans$validaciones1 == FALSE,
                                                xlm_object_trans$Esperanza.vida.mujer, 
                                                round(xlm_object_trans$Esperanza.vida.hombre * 1.12,1))
 
-#Eliminación del error 2 para más adelante corregirlos
-xlm_object_trans$validaciones2 <- Valid_Data[, 2]
-xlm_object_trans$Mortalidad.infantil = ifelse(xlm_object_trans$validaciones2 == FALSE,
-                                              xlm_object_trans$Tasa.mortalidad, NA)
-
-#Corregir error 3
-xlm_object_trans$validaciones3 <- Valid_Data[, 3]
+#Correción error 2
+xlm_object_trans$validaciones3 <- Valid_Data[, 2]
 xlm_object_trans$Esperanza.vida.mujer = ifelse(xlm_object_trans$validaciones3 == FALSE,
                                                xlm_object_trans$Esperanza.vida.mujer, 
                                                round(xlm_object_trans$Esperanza.vida.hombre * 1.12,1))
+
+
 
 #----------------------------------------------------------------------#
 #### 3. Mostrar datos faltantes                                     ####
@@ -196,21 +193,44 @@ ggplot(long, aes(fill=Indicadores, y=valor2, x=GRUPOS)) +
 #----------------------------------------------------------------------#
 #### 3. PNB POR GRUPOS                                              ####
 #----------------------------------------------------------------------#
-x <- xlm_object_trans[,c("PNB","GRUPOS")]
-x
-long <- melt(setDT(x), id.vars = c("GRUPOS"), variable.name = "Indicadores")
-long <- long %>% group_by(Indicadores, GRUPOS) %>% summarise(valor2 = mean(value, rm.na = TRUE))
+xlm_object_trans$y <- xlm_object_trans$PNB/xlm_object_trans$Poblacion.miles
+long <- xlm_object_trans %>% group_by(GRUPOS) %>% summarise(valor2 = mean(y, na.rm=TRUE))
+long
 
-ggplot(long, aes(fill=Indicadores, y=valor2, x=GRUPOS)) + 
-  geom_bar(position="dodge", stat="identity") +
-  ylab("porcentaje") + geom_text(
-    aes(x = GRUPOS, y = valor2, label = paste(round(valor2,1), "%"), group = Indicadores),
-    position = position_dodge(width = 1),
-    vjust = -0.5, size = 4 ) + ggtitle("Indicadores de tasas de mortalidad y natalidad")
+boxplot(long$valor2)
+
+p <- ggplot(xlm_object_trans, aes(y=y, fill=GRUPOS, x=GRUPOS)) + 
+  geom_boxplot() + ggtitle("PNB per cápita") + ylab("PNB per cápita")
+
+p
 
 #----------------------------------------------------------------------#
 #### 4. CUARTILES POR PNB                                           ####
 #----------------------------------------------------------------------#
 
+long 
 
+#cuartiles
 
+Q1 <- quantile(xlm_object_trans$y, na.rm = TRUE, c(0.25), type = 6); Q1
+
+Q2 <- quantile(xlm_object_trans$y, na.rm = TRUE, c(0.50), type = 6); Q2
+
+Q3 <- quantile(xlm_object_trans$y, na.rm = TRUE, c(0.75), type = 6); Q3
+
+xlm_object_trans$TIPO <- "BAJO"
+xlm_object_trans$TIPO[xlm_object_trans$y >= Q1 & xlm_object_trans$y < Q2] <- "MEDIO_BAJO"
+xlm_object_trans$TIPO[xlm_object_trans$y >= Q2 & xlm_object_trans$y < Q3] <- "MEDIO_ALTO"
+xlm_object_trans$TIPO[xlm_object_trans$y > Q3] <- "ALTO"
+
+x <- xlm_object_trans[,c("TIPO","GRUPOS", "y", "País")]
+a <- xlm_object_trans %>% group_by(TIPO,GRUPOS) %>% count()
+
+a
+
+ggplot(a, aes(fill=TIPO, y=n, x=GRUPOS)) + 
+  geom_bar(position="dodge", stat="identity") +
+  ylab("porcentaje") + geom_text(
+    aes(x = GRUPOS, y = n, label = paste(n), group = TIPO),
+    position = position_dodge(width = 1),
+    vjust = -0.5, size = 4 ) + ggtitle("Indicadores de tasas de mortalidad y natalidad")
