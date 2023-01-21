@@ -187,7 +187,7 @@ long <- long %>% group_by(Indicadores, GRUPOS) %>% summarise(valor1 = mean(value
 ggplot(long, aes(fill=Indicadores, y=valor1, x=GRUPOS)) + 
   geom_bar(position="dodge", stat="identity") +
   ylab("porcentaje") + geom_text(
-    aes(x = GRUPOS, y = valor1, label = paste(round(valor1,1), "%"), group = Indicadores),
+    aes(x = GRUPOS, y = valor1, label = " ", group = Indicadores),
     position = position_dodge(width = 1),
     vjust = -0.5, size = 4 ) + ggtitle("Indicadores de tasas de mortalidad y natalidad")
   
